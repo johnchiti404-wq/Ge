@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import { notificationSound } from '../utils/notificationSound';
+import { soundManager } from '../utils/notificationSound';
 
 interface MessageContextType {
   unreadMessageCount: number;
@@ -80,7 +80,7 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ rideId, childr
       localStorage.setItem(`unread_${rideId}`, unreadCount.toString());
 
       if (unreadCount > previousUnreadCount.current && hasInitialLoad) {
-        notificationSound.play();
+        soundManager.play('message');
       }
       previousUnreadCount.current = unreadCount;
       hasInitialLoad = true;
@@ -120,6 +120,7 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ rideId, childr
       if (snapshot.val() === 'completed') {
         localStorage.removeItem(`messages_${rideId}`);
         localStorage.removeItem(`unread_${rideId}`);
+        localStorage.removeItem(`arrival_notified_${rideId}`);
         setUnreadMessageCount(0);
       }
     });

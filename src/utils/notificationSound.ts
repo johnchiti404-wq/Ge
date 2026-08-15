@@ -1,47 +1,42 @@
-class NotificationSound {
-  private audio: HTMLAudioElement | null = null;
-  private isInitialized = false;
+class SoundManager {
+  private sounds: Record<string, HTMLAudioElement> = {};
+  private unlocked = false;
 
-  initialize() {
-    if (this.isInitialized) return;
+  constructor() {
+    this.sounds.message = new Audio('/sounds/message.mp3');
+    this.sounds.arrived = new Audio('/sounds/arrived.mp3');
 
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    Object.values(this.sounds).forEach((audio) => {
+      audio.preload = 'auto';
+      audio.volume = 0.6;
+    });
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    const unlock = () => {
+      if (this.unlocked) return;
+      this.unlocked = true;
 
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
+      Object.values(this.sounds).forEach((audio) => {
+        audio.play().then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+        }).catch(() => {});
+      });
 
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      window.removeEventListener('pointerdown', unlock);
+    };
 
-    this.isInitialized = true;
+    window.addEventListener('pointerdown', unlock, { once: true });
   }
 
-  play() {
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+  play(name: 'message' | 'arrived') {
+    const audio = this.sounds[name];
+    if (!audio) return;
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.frequency.value = 800;
-      oscillator.type = 'sine';
-
-      gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.2);
-    } catch (error) {
-      console.error('Error playing notification sound:', error);
-    }
+    audio.currentTime = 0;
+    audio.play().catch((error) => {
+      console.error(`Error playing ${name} sound:`, error);
+    });
   }
 }
 
-export const notificationSound = new NotificationSound();
+export const soundManager = new SoundManager();

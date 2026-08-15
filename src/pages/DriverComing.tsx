@@ -15,6 +15,7 @@ import { auth, db } from '../config/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { listenToDriverLocation } from '../services/trackingService';
 import { trimPolylineFromPosition } from '../utils/polylineUtils';
+import { soundManager } from '../utils/notificationSound';
 import { 
   subscribeToOrder, 
   cancelOrder, 
@@ -280,9 +281,14 @@ export const DriverComing: React.FC<DriverComingProps> = ({
         setStatusText('Your driver has arrived');
 
         if (!hasShownArrivalAlert) {
-          setShowArrivalAlert(true);
-          setHasShownArrivalAlert(true);
-          setTimeout(() => setShowArrivalAlert(false), 5000);
+          const alreadyNotified = localStorage.getItem(`arrival_notified_${orderId}`);
+          if (!alreadyNotified) {
+            setShowArrivalAlert(true);
+            setHasShownArrivalAlert(true);
+            soundManager.play('arrived');
+            localStorage.setItem(`arrival_notified_${orderId}`, 'true');
+            setTimeout(() => setShowArrivalAlert(false), 5000);
+          }
         }
       }
 
