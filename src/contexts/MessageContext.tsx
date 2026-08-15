@@ -87,6 +87,8 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ rideId, childr
     };
 
     const unsubscribeSeen = onSnapshot(parentRef, (snapshot) => {
+      if (snapshot.metadata.hasPendingWrites) return;
+
       const data = snapshot.data();
       lastSeenAt = timestampToMillis(data?.clientLastSeenAt);
       latestSeenLoaded = true;
